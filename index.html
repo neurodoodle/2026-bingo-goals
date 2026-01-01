@@ -113,7 +113,12 @@
       cursor:pointer;
     }
 
-    .persona{font-size:.85rem;background:#f5f5f5;padding:10px;border-radius:12px}
+    .persona{
+      font-size:.85rem;
+      background:#f5f5f5;
+      padding:10px;
+      border-radius:12px
+    }
 
     .controls label{font-size:.85rem}
 
@@ -130,6 +135,7 @@
     }
   </style>
 </head>
+
 <body>
 <div class="app" id="capture">
 
@@ -143,12 +149,17 @@
 
 <div class="panel">
   <h2>Edit Tile</h2>
-  <textarea id="editor" placeholder="Write your goal here..."></textarea>
-  <button onclick="saveTile()">Save Tile</button>
+
+  <!-- LIVE EDITING -->
+  <textarea
+    id="editor"
+    placeholder="Write your goal here..."
+    oninput="liveUpdateTile()"
+  ></textarea>
 
   <div>
     <label>Theme</label>
-    <select onchange="changeTheme(this.value)">
+    <select id="themeSelect" onchange="changeTheme(this.value)">
       <option value="sunrise">Sunrise Dreamer</option>
       <option value="ocean">Calm Ocean</option>
       <option value="forest">Grounded Forest</option>
@@ -171,69 +182,170 @@
   <button onclick="exportPNG()">Export PNG</button>
   <button onclick="exportJPG()">Export JPG</button>
   <button onclick="exportPDF()">Export PDF</button>
-  <button onclick="navigator.share ? shareBoard() : alert('Use export buttons to share!')">Share</button>
+  <button onclick="navigator.share ? shareBoard() : alert('Use export buttons to share!')">
+    Share
+  </button>
 
   <div class="print-note">Tip: use browser print for a clean printable board.</div>
 </div>
 </div>
 
 <script>
-const board=document.getElementById('board');
-const editor=document.getElementById('editor');
-const personaBox=document.getElementById('persona');
-let selected=null;
-let dragSrc=null;
+const board = document.getElementById('board');
+const editor = document.getElementById('editor');
+const personaBox = document.getElementById('persona');
+const themeSelect = document.getElementById('themeSelect');
 
-const themes={
- sunrise:{colors:['#ffd166','#ffb703','#fb8500','#ff8fab','#ff6f91'],persona:'🌅 Sunrise Dreamer: optimistic & future-focused.'},
- ocean:{colors:['#90dbf4','#48cae4','#00b4d8','#0096c7','#0077b6'],persona:'🌊 Calm Ocean: steady, reflective growth.'},
- forest:{colors:['#a7c957','#6a994e','#386641','#90be6d','#52796f'],persona:'🌲 Grounded Forest: patient & resilient.'},
- lavender:{colors:['#e0aaff','#cdb4db','#b8c0ff','#a2d2ff','#ffc8dd'],persona:'💜 Gentle Lavender: healing + intention.'},
- berry:{colors:['#ff006e','#d62828','#9b2226','#6a040f','#ff4d6d'],persona:'🍓 Bold Berry: fearless ambition.'},
- mono:{colors:['#adb5bd','#6c757d','#495057','#343a40','#212529'],persona:'⚫ Minimal Focus: clarity & discipline.'}
+let selected = null;
+let dragSrc = null;
+
+const themes = {
+  sunrise: {
+    colors:['#ffd166','#ffb703','#fb8500','#ff8fab','#ff6f91'],
+    main:'#ff6f91',
+    persona:'🌅 Sunrise Dreamer: optimistic & future-focused.'
+  },
+  ocean: {
+    colors:['#90dbf4','#48cae4','#00b4d8','#0096c7','#0077b6'],
+    main:'#00b4d8',
+    persona:'🌊 Calm Ocean: steady, reflective growth.'
+  },
+  forest: {
+    colors:['#a7c957','#6a994e','#386641','#90be6d','#52796f'],
+    main:'#6a994e',
+    persona:'🌲 Grounded Forest: patient & resilient.'
+  },
+  lavender: {
+    colors:['#e0aaff','#cdb4db','#b8c0ff','#a2d2ff','#ffc8dd'],
+    main:'#cdb4db',
+    persona:'💜 Gentle Lavender: healing + intention.'
+  },
+  berry: {
+    colors:['#ff006e','#d62828','#9b2226','#6a040f','#ff4d6d'],
+    main:'#ff006e',
+    persona:'🍓 Bold Berry: fearless ambition.'
+  },
+  mono: {
+    colors:['#adb5bd','#6c757d','#495057','#343a40','#212529'],
+    main:'#343a40',
+    persona:'⚫ Minimal Focus: clarity & discipline.'
+  }
 };
 
 function init(){
- const data=JSON.parse(localStorage.getItem('bingo2026'))||Array(25).fill('');
- for(let i=0;i<25;i++){
-  const t=document.createElement('div');
-  t.className='tile';
-  t.draggable=true;
-  t.textContent=data[i]||'Click to set goal';
-  t.onclick=()=>selectTile(i);
-  t.addEventListener('dragstart',()=>{dragSrc=i;t.classList.add('dragging')});
-  t.addEventListener('dragend',()=>t.classList.remove('dragging'));
-  t.addEventListener('dragover',e=>e.preventDefault());
-  t.addEventListener('drop',()=>swapTiles(i));
-  board.appendChild(t);
- }
- changeTheme(localStorage.getItem('theme')||'sunrise');
- loadHeader();
+  const data = loadData();
+
+  for(let i=0;i<25;i++){
+    const t=document.createElement('div');
+    t.className='tile';
+    t.draggable=true;
+    t.textContent=data[i] || 'Click to set goal';
+    t.onclick=()=>selectTile(i);
+
+    t.addEventListener('dragstart',()=>{dragSrc=i;t.classList.add('dragging')});
+    t.addEventListener('dragend',()=>t.classList.remove('dragging'));
+    t.addEventListener('dragover',e=>e.preventDefault());
+    t.addEventListener('drop',()=>swapTiles(i));
+
+    board.appendChild(t);
+  }
+
+  changeTheme(localStorage.getItem('theme') || 'sunrise');
+  loadHeader();
 }
 
-function selectTile(i){selected=i;editor.value=loadData()[i]||''}
-function saveTile(){if(selected==null)return;const d=loadData();d[selected]=editor.value;saveData(d);board.children[selected].textContent=editor.value||'Click to set goal'}
-function loadData(){return JSON.parse(localStorage.getItem('bingo2026'))||Array(25).fill('')}
-function saveData(d){localStorage.setItem('bingo2026',JSON.stringify(d))}
+function selectTile(i){
+  selected=i;
+  editor.value=loadData()[i] || '';
+  editor.focus();
+}
 
-function swapTiles(i){if(dragSrc==null)return;const d=loadData();[d[dragSrc],d[i]]=[d[i],d[dragSrc]];saveData(d);board.children[dragSrc].textContent=d[dragSrc]||'Click';board.children[i].textContent=d[i]||'Click'}
+/* 🔥 LIVE UPDATE */
+function liveUpdateTile(){
+  if(selected===null) return;
 
-function changeTheme(name){const t=themes[name];[...board.children].forEach((el,i)=>el.style.background=t.colors[i%5]);personaBox.textContent=t.persona;localStorage.setItem('theme',name)}
+  board.children[selected].textContent =
+    editor.value || 'Click to set goal';
 
-function setFontScale(v){document.documentElement.style.setProperty('--font-scale',v)}
-function toggleContrast(on){document.body.style.filter=on?'contrast(1.2)':''}
+  const d = loadData();
+  d[selected] = editor.value;
+  saveData(d);
+}
 
-function saveHeader(){localStorage.setItem('title',title.textContent);localStorage.setItem('quote',quote.textContent)}
-function loadHeader(){if(localStorage.getItem('title'))title.textContent=localStorage.getItem('title');if(localStorage.getItem('quote'))quote.textContent=localStorage.getItem('quote');}
+function loadData(){
+  return JSON.parse(localStorage.getItem('bingo2026')) || Array(25).fill('');
+}
 
-document.getElementById('title').oninput=saveHeader;document.getElementById('quote').oninput=saveHeader;
+function saveData(d){
+  localStorage.setItem('bingo2026', JSON.stringify(d));
+}
 
-function exportPNG(){html2canvas(document.getElementById('capture')).then(c=>download(c,'png'))}
-function exportJPG(){html2canvas(document.getElementById('capture')).then(c=>download(c,'jpeg'))}
-function exportPDF(){html2canvas(document.getElementById('capture')).then(c=>{const pdf=new jspdf.jsPDF('p','pt','a4');const img=c.toDataURL('image/png');pdf.addImage(img,'PNG',20,20,560,560);pdf.save('2026-goals-bingo.pdf')})}
-function download(canvas,type){const a=document.createElement('a');a.href=canvas.toDataURL('image/'+type);a.download='2026-goals-bingo.'+type;a.click()}
+function swapTiles(i){
+  if(dragSrc===null) return;
+  const d = loadData();
+  [d[dragSrc], d[i]] = [d[i], d[dragSrc]];
+  saveData(d);
+  board.children[dragSrc].textContent = d[dragSrc] || 'Click';
+  board.children[i].textContent = d[i] || 'Click';
+}
 
-function shareBoard(){html2canvas(document.getElementById('capture')).then(c=>{c.toBlob(b=>{const f=new File([b],'goals.png',{type:'image/png'});navigator.share({files:[f],title:'My 2026 Goals Bingo'});})})}
+function changeTheme(name){
+  const t = themes[name];
+  [...board.children].forEach((el,i)=>el.style.background=t.colors[i%5]);
+  personaBox.textContent = t.persona;
+
+  themeSelect.style.background = t.main;
+  themeSelect.style.color = '#fff';
+
+  localStorage.setItem('theme', name);
+}
+
+function setFontScale(v){
+  document.documentElement.style.setProperty('--font-scale', v);
+}
+
+function toggleContrast(on){
+  document.body.style.filter = on ? 'contrast(1.2)' : '';
+}
+
+function saveHeader(){
+  localStorage.setItem('title', title.textContent);
+  localStorage.setItem('quote', quote.textContent);
+}
+
+function loadHeader(){
+  if(localStorage.getItem('title')) title.textContent=localStorage.getItem('title');
+  if(localStorage.getItem('quote')) quote.textContent=localStorage.getItem('quote');
+}
+
+title.oninput = saveHeader;
+quote.oninput = saveHeader;
+
+function exportPNG(){html2canvas(capture).then(c=>download(c,'png'))}
+function exportJPG(){html2canvas(capture).then(c=>download(c,'jpeg'))}
+function exportPDF(){
+  html2canvas(capture).then(c=>{
+    const pdf=new jspdf.jsPDF('p','pt','a4');
+    pdf.addImage(c.toDataURL(),'PNG',20,20,560,560);
+    pdf.save('2026-goals-bingo.pdf');
+  })
+}
+
+function download(canvas,type){
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/'+type);
+  a.download='2026-goals-bingo.'+type;
+  a.click();
+}
+
+function shareBoard(){
+  html2canvas(capture).then(c=>{
+    c.toBlob(b=>{
+      const f=new File([b],'goals.png',{type:'image/png'});
+      navigator.share({files:[f],title:'My 2026 Goals Bingo'});
+    });
+  });
+}
 
 init();
 </script>
