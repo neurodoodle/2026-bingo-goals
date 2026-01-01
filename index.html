@@ -1,255 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>2026 Goals Bingo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026 Goals Bingo</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<style>
-:root{
- --bg:#fff7ec;
- --title:#ff6f91;
- --subtitle:#ffb703;
- --font-scale:1;
- --font-body:'Nunito',sans-serif;
- --font-title:'Baloo 2',cursive;
-}
+  <style>
+    :root {
+      --bg:#fff7ec;
+      --title:#ff4d8d;
+      --subtitle:#ff9f45;
+      --tile-text:#ffffff;
+      --font-scale:1;
+      --font-title:'Baloo 2', cursive;
+      --font-body:'Nunito', sans-serif;
+    }
 
-body{
- margin:0;
- background:var(--bg);
- font-family:var(--font-body);
- display:flex;
- justify-content:center;
-}
+    body {
+      margin:0;
+      font-family:var(--font-body);
+      background:var(--bg);
+      display:flex;
+      justify-content:center;
+    }
 
-.app{
- width:min(1200px,95vw);
- padding:20px;
- display:grid;
- grid-template-columns:1fr 340px;
- gap:20px;
- position:relative;
-}
+    .app{
+      width:min(1200px,95vw);
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr 340px;
+      gap:20px;
+    }
 
-header{
- grid-column:1/-1;
- text-align:center;
-}
+    header{
+      grid-column:1/-1;
+      text-align:center;
+    }
 
-h1{
- font-family:var(--font-title);
- color:var(--title);
- font-size:calc(2.6rem * var(--font-scale));
- margin:0;
-}
+    h1[contenteditable], .quote[contenteditable]{
+      outline:none;
+      cursor:text;
+    }
 
-.subtitle{color:var(--subtitle)}
-.quote{font-style:italic}
+    h1{
+      font-family:var(--font-title);
+      font-size:calc(2.6rem * var(--font-scale));
+      color:var(--title);
+      margin:0;
+    }
 
-.board{
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:12px;
-}
+    .subtitle{
+      color:var(--subtitle);
+      font-size:calc(1rem * var(--font-scale));
+    }
 
-.tile{
- aspect-ratio:1;
- border-radius:18px;
- display:flex;
- align-items:center;
- justify-content:center;
- text-align:center;
- font-weight:700;
- color:#fff;
- padding:10px;
- cursor:pointer;
- box-shadow:0 8px 18px rgba(0,0,0,.1);
-}
+    .quote{
+      margin-top:8px;
+      font-style:italic;
+      font-size:calc(0.95rem * var(--font-scale));
+    }
 
-.panel{
- background:#fff;
- border-radius:18px;
- padding:16px;
- display:flex;
- flex-direction:column;
- gap:12px;
-}
+    .board{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:12px;
+    }
 
-textarea, select, button{
- border-radius:12px;
- padding:10px;
- border:1px solid #ddd;
- font-family:inherit;
-}
+    .tile{
+      aspect-ratio:1/1;
+      border-radius:18px;
+      padding:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      font-weight:700;
+      color:var(--tile-text);
+      cursor:grab;
+      box-shadow:0 8px 18px rgba(0,0,0,.1);
+      font-size:calc(.9rem * var(--font-scale));
+    }
 
-button{cursor:pointer;font-weight:700}
+    .tile.dragging{opacity:.4}
 
-#exportMenu{
- position:absolute;
- top:20px;
- right:20px;
-}
+    .panel{
+      background:#fff;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.1);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
 
-#exportOptions{
- display:none;
- position:absolute;
- right:0;
- background:#fff;
- border-radius:12px;
- box-shadow:0 10px 30px rgba(0,0,0,.15);
- padding:10px;
-}
+    textarea{
+      border-radius:12px;
+      border:1px solid #ddd;
+      padding:10px;
+      font-family:var(--font-body);
+    }
 
-#exportOptions button{width:100%;margin-top:6px}
+    button, select{
+      border:none;
+      border-radius:12px;
+      padding:10px;
+      font-weight:700;
+      cursor:pointer;
+    }
 
-@media print{
- .panel,#exportMenu{display:none}
- .app{grid-template-columns:1fr}
-}
-</style>
+    .persona{font-size:.85rem;background:#f5f5f5;padding:10px;border-radius:12px}
+
+    .controls label{font-size:.85rem}
+
+    .print-note{font-size:.8rem;color:#666}
+
+    @media print{
+      body{background:#fff}
+      .panel{display:none}
+      .app{grid-template-columns:1fr}
+    }
+
+    @media(max-width:900px){
+      .app{grid-template-columns:1fr}
+    }
+  </style>
 </head>
-
 <body>
 <div class="app" id="capture">
 
-<div id="exportMenu">
- <button onclick="toggleExport()">Export</button>
- <div id="exportOptions">
-  <button onclick="exportPNG()">PNG</button>
-  <button onclick="exportJPG()">JPG</button>
-  <button onclick="exportPDF()">PDF</button>
- </div>
-</div>
-
 <header>
- <h1 contenteditable id="title">2026 Goals Bingo</h1>
- <div class="subtitle">(click to edit)</div>
- <div class="quote" contenteditable id="quote">Small steps, big magic.</div>
+  <h1 id="title" contenteditable="true">2026 Goals Bingo</h1>
+  <div class="subtitle">(click to edit title & quote)</div>
+  <div class="quote" id="quote" contenteditable="true">"Small steps, big magic."</div>
 </header>
 
 <div class="board" id="board"></div>
 
 <div class="panel" id="panel">
- <div style="display:flex;justify-content:space-between">
-  <strong>Edit Tile</strong>
-  <button onclick="panel.style.display='none'">✕</button>
- </div>
- <textarea id="editor" placeholder="Type your goal..."></textarea>
+  <div style="display:flex;justify-content:space-between;align-items:center"><h2>Edit Tile</h2><button onclick="closePanel()" style="padding:4px 10px">✕</button></div>
+  <textarea id="editor" placeholder="Write your goal here..."></textarea>
+  <button onclick="saveTile()">Save Tile</button>
 
- <label>Theme</label>
- <div id="themes"></div>
- <div id="persona"></div>
+  <div>
+    <label>Theme</label>
+    <div id="themeButtons" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+  </div>
 
- <label>Font</label>
- <select onchange="setFont(this.value)">
-  <option value="'Nunito',sans-serif">Nunito</option>
-  <option value="'Baloo 2',cursive">Baloo</option>
-  <option value="Arial">Arial</option>
-  <option value="Georgia">Georgia</option>
- </select>
+  <div class="persona" id="persona"></div>
 
- <label>Font Size</label>
- <input type="range" min="0.85" max="1.2" step="0.05" onchange="setScale(this.value)">
+  <div>
+    <label>Font Family</label>
+    <select onchange="setFont(this.value)">
+      <option value="'Nunito', sans-serif">Nunito</option>
+      <option value="'Baloo 2', cursive">Baloo</option>
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="Georgia, serif">Georgia</option>
+    </select>
+  </div>
+
+  <div class="controls">
+    <label>Font Size</label>
+    <input type="range" min="0.85" max="1.2" step="0.05" onchange="setFontScale(this.value)">
+
+    <label>High Contrast</label>
+    <input type="checkbox" onchange="toggleContrast(this.checked)">
+  </div>
+
+  <div class="persona" id="persona"></div>
+
+  <button onclick="exportPNG()">Export PNG</button>
+  <button onclick="exportJPG()">Export JPG</button>
+  <button onclick="exportPDF()">Export PDF</button>
+  <button onclick="navigator.share ? shareBoard() : alert('Use export buttons to share!')">Share</button>
+
+  <div class="print-note">Tip: use browser print for a clean printable board.</div>
 </div>
-
 </div>
 
 <script>
 const board=document.getElementById('board');
 const editor=document.getElementById('editor');
-const panel=document.getElementById('panel');
+const personaBox=document.getElementById('persona');
 let selected=null;
+let dragSrc=null;
 
 const themes={
- sunrise:{main:'#ff6f91',colors:['#ffd166','#ffb703','#fb8500','#ff8fab','#ff6f91'],persona:'🌅 Sunrise Dreamer'},
- ocean:{main:'#0096c7',colors:['#90dbf4','#48cae4','#00b4d8','#0096c7','#0077b6'],persona:'🌊 Calm Ocean'},
- forest:{main:'#6a994e',colors:['#a7c957','#6a994e','#386641','#90be6d','#52796f'],persona:'🌲 Grounded Forest'},
- lavender:{main:'#cdb4db',colors:['#e0aaff','#cdb4db','#b8c0ff','#a2d2ff','#ffc8dd'],persona:'💜 Gentle Lavender'},
- berry:{main:'#ff006e',colors:['#ff006e','#d62828','#9b2226','#6a040f','#ff4d6d'],persona:'🍓 Bold Berry'},
- mono:{main:'#495057',colors:['#adb5bd','#6c757d','#495057','#343a40','#212529'],persona:'⚫ Minimal Focus'}
+ sunrise:{colors:['#ffd166','#ffb703','#fb8500','#ff8fab','#ff6f91'],persona:'🌅 Sunrise Dreamer: optimistic & future-focused.',main:'#ff6f91'},
+ ocean:{colors:['#90dbf4','#48cae4','#00b4d8','#0096c7','#0077b6'],persona:'🌊 Calm Ocean: steady, reflective growth.',main:'#0096c7'},
+ forest:{colors:['#a7c957','#6a994e','#386641','#90be6d','#52796f'],persona:'🌲 Grounded Forest: patient & resilient.',main:'#6a994e'},
+ lavender:{colors:['#e0aaff','#cdb4db','#b8c0ff','#a2d2ff','#ffc8dd'],persona:'💜 Gentle Lavender: healing + intention.',main:'#cdb4db'},
+ berry:{colors:['#ff006e','#d62828','#9b2226','#6a040f','#ff4d6d'],persona:'🍓 Bold Berry: fearless ambition.',main:'#ff006e'},
+ mono:{colors:['#adb5bd','#6c757d','#495057','#343a40','#212529'],persona:'⚫ Minimal Focus: clarity & discipline.',main:'#495057'}
 };
 
 function init(){
- const data=JSON.parse(localStorage.getItem('bingo'))||Array(25).fill('');
+ buildThemeButtons();
+ const data=JSON.parse(localStorage.getItem('bingo2026'))||Array(25).fill('');
  for(let i=0;i<25;i++){
   const t=document.createElement('div');
   t.className='tile';
-  t.textContent=data[i]||'Click';
+  t.draggable=true;
+  t.textContent=data[i]||'Click to set goal';
   t.onclick=()=>selectTile(i);
+  t.addEventListener('dragstart',()=>{dragSrc=i;t.classList.add('dragging')});
+  t.addEventListener('dragend',()=>t.classList.remove('dragging'));
+  t.addEventListener('dragover',e=>e.preventDefault());
+  t.addEventListener('drop',()=>swapTiles(i));
   board.appendChild(t);
  }
- buildThemes();
- applyTheme('sunrise');
+ changeTheme(localStorage.getItem('theme')||'sunrise');
+ loadHeader();
 }
 
-function selectTile(i){
- selected=i;
- editor.value=board.children[i].textContent==='Click'?'':board.children[i].textContent;
- panel.style.display='flex';
-}
+function selectTile(i){selected=i;editor.value=loadData()[i]||'';document.getElementById('panel').style.display='flex'}
+function saveTile(){}
+function loadData(){return JSON.parse(localStorage.getItem('bingo2026'))||Array(25).fill('')}
+function saveData(d){localStorage.setItem('bingo2026',JSON.stringify(d))}
 
-editor.oninput=()=>{
- if(selected===null)return;
- board.children[selected].textContent=editor.value||'Click';
- const d=[...board.children].map(t=>t.textContent);
- localStorage.setItem('bingo',JSON.stringify(d));
-};
+function swapTiles(i){if(dragSrc==null)return;const d=loadData();[d[dragSrc],d[i]]=[d[i],d[dragSrc]];saveData(d);board.children[dragSrc].textContent=d[dragSrc]||'Click';board.children[i].textContent=d[i]||'Click'}
 
-function buildThemes(){
- const wrap=document.getElementById('themes');
- Object.entries(themes).forEach(([k,v])=>{
-  const b=document.createElement('button');
-  b.textContent=k;
-  b.style.background=v.main;
-  b.style.color='#fff';
-  b.onclick=()=>applyTheme(k);
-  wrap.appendChild(b);
- });
-}
-
-function applyTheme(name){
+function changeTheme(name){
  const t=themes[name];
  [...board.children].forEach((el,i)=>el.style.background=t.colors[i%5]);
  document.documentElement.style.setProperty('--title',t.main);
- document.getElementById('persona').textContent=t.persona;
+ document.documentElement.style.setProperty('--subtitle',t.colors[1]);
+ personaBox.textContent=t.persona;
+ localStorage.setItem('theme',name)
 }
 
+function setFontScale(v){document.documentElement.style.setProperty('--font-scale',v)}
+function toggleContrast(on){document.body.style.filter=on?'contrast(1.2)':''}
+
+function saveHeader(){localStorage.setItem('title',title.textContent);localStorage.setItem('quote',quote.textContent)}
+function loadHeader(){if(localStorage.getItem('title'))title.textContent=localStorage.getItem('title');if(localStorage.getItem('quote'))quote.textContent=localStorage.getItem('quote');}
+
+document.getElementById('title').oninput=saveHeader;document.getElementById('quote').oninput=saveHeader;
+
+function hidePanel(){document.getElementById('panel').style.display='none'}
+function closePanel(){hidePanel()}
 function setFont(f){document.documentElement.style.setProperty('--font-body',f)}
-function setScale(v){document.documentElement.style.setProperty('--font-scale',v)}
 
-function toggleExport(){
- const m=document.getElementById('exportOptions');
- m.style.display=m.style.display==='block'?'none':'block';
+editor.oninput=()=>{
+ if(selected===null)return;
+ const d=loadData();
+ d[selected]=editor.value;
+ saveData(d);
+ board.children[selected].textContent=editor.value||'Click to set goal'
 }
 
-function exportPNG(){hidePanel(()=>save('png'))}
-function exportJPG(){hidePanel(()=>save('jpeg'))}
-function exportPDF(){hidePanel(()=>{
- html2canvas(capture).then(c=>{
-  const pdf=new jspdf.jsPDF();
-  pdf.addImage(c.toDataURL(),'PNG',20,20,550,550);
-  pdf.save('2026-goals-bingo.pdf');
- })
-})}
-
-function hidePanel(cb){
- panel.style.display='none';
- setTimeout(cb,100);
-}
-
-function save(type){
- html2canvas(capture).then(c=>{
-  const a=document.createElement('a');
-  a.href=c.toDataURL('image/'+type);
-  a.download='2026-goals-bingo.'+type;
-  a.click();
+function buildThemeButtons(){
+ const wrap=document.getElementById('themeButtons');
+ Object.entries(themes).forEach(([k,v])=>{
+  const b=document.createElement('button');
+  b.textContent=k.charAt(0).toUpperCase()+k.slice(1);
+  b.style.background=v.main;
+  b.style.color='#fff';
+  b.onclick=()=>changeTheme(k);
+  wrap.appendChild(b);
  })
 }
+
+function exportPNG(){html2canvas(document.getElementById('capture')).then(c=>download(c,'png'))}
+function exportJPG(){html2canvas(document.getElementById('capture')).then(c=>download(c,'jpeg'))}
+function exportPDF(){html2canvas(document.getElementById('capture')).then(c=>{const pdf=new jspdf.jsPDF('p','pt','a4');const img=c.toDataURL('image/png');pdf.addImage(img,'PNG',20,20,560,560);pdf.save('2026-goals-bingo.pdf')})}
+function download(canvas,type){const a=document.createElement('a');a.href=canvas.toDataURL('image/'+type);a.download='2026-goals-bingo.'+type;a.click()}
+
+function shareBoard(){html2canvas(document.getElementById('capture')).then(c=>{c.toBlob(b=>{const f=new File([b],'goals.png',{type:'image/png'});navigator.share({files:[f],title:'My 2026 Goals Bingo'});})})}
 
 init();
 </script>
