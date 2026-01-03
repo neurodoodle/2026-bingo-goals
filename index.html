@@ -111,7 +111,6 @@ button{cursor:pointer;font-weight:700}
  .panel,#exportMenu{display:none}
  .app{grid-template-columns:1fr}
 }
-
 </style>
 </head>
 
@@ -172,7 +171,6 @@ button{cursor:pointer;font-weight:700}
 </div>
 
 <script>
- 
 const board=document.getElementById('board');
 const editor=document.getElementById('editor');
 const panel=document.getElementById('panel');
@@ -192,7 +190,7 @@ function init(){
  for(let i=0;i<25;i++){
   const t=document.createElement('div');
   t.className='tile';
-  t.textContent=data[i]||'Click to edit';
+  t.textContent=data[i]||'Click';
   t.onclick=()=>selectTile(i);
   board.appendChild(t);
  }
@@ -202,13 +200,13 @@ function init(){
 
 function selectTile(i){
  selected=i;
- editor.value=board.children[i].textContent==='Click to edit'?'':board.children[i].textContent;
+ editor.value=board.children[i].textContent==='Click'?'':board.children[i].textContent;
  panel.style.display='flex';
 }
 
 editor.oninput=()=>{
  if(selected===null)return;
- board.children[selected].textContent=editor.value||'Click to edit';
+ board.children[selected].textContent=editor.value||'Click';
  const d=[...board.children].map(t=>t.textContent);
  localStorage.setItem('bingo',JSON.stringify(d));
 };
@@ -263,6 +261,7 @@ function save(type){
   a.click();
  })
 }
+
 init();
 </script>
 </body>
