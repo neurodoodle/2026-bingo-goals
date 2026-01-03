@@ -119,15 +119,6 @@
 
     .print-note{font-size:.8rem;color:#666}
 
-    /* used ONLY during export */
-    .exporting {
-      grid-template-columns: 1fr !important;
-      justify-items: center;
-    }
-    .exporting .panel {
-      display:none !important;
-    }
-
     @media print{
       body{background:#fff}
       .panel{display:none}
@@ -151,9 +142,137 @@
 <div class="board" id="board"></div>
 
 <div class="panel" id="panel">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <h2>Edit Tile</h2>
-    <button onclick="closePanel()" style="padding:4px 10px">✕</button>
+  <div style="display:flex;justify-content:space-between;align-items:center"><h2>Edit Tile</h2><button onclick="closePanel()" style="padding:4px 10px">✕</button></div>
+  <textarea id="editor" placeholder="Write your goal here..."></textarea>
+  <button onclick="saveTile()">Save Tile</button>
+
+  <div>
+    <label>Theme</label>
+    <div id="themeButtons" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
   </div>
 
-  <textarea id="editor" placeholder="Write your goal here..."></textare
+  <div class="persona" id="persona"></div>
+
+  <div>
+    <label>Font Family</label>
+    <select onchange="setFont(this.value)">
+      <option value="'Nunito', sans-serif">Nunito</option>
+      <option value="'Baloo 2', cursive">Baloo</option>
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="Georgia, serif">Georgia</option>
+    </select>
+  </div>
+
+  <div class="controls">
+    <label>Font Size</label>
+    <input type="range" min="0.85" max="1.2" step="0.05" onchange="setFontScale(this.value)">
+
+    <label>High Contrast</label>
+    <input type="checkbox" onchange="toggleContrast(this.checked)">
+  </div>
+
+  <div class="persona" id="persona"></div>
+
+  <button onclick="exportPNG()">Export PNG</button>
+  <button onclick="exportJPG()">Export JPG</button>
+  <button onclick="exportPDF()">Export PDF</button>
+  <button onclick="navigator.share ? shareBoard() : alert('Use export buttons to share!')">Share</button>
+
+  <div class="print-note">Tip: use browser print for a clean printable board.</div>
+</div>
+</div>
+
+<script>
+const board=document.getElementById('board');
+const editor=document.getElementById('editor');
+const personaBox=document.getElementById('persona');
+let selected=null;
+let dragSrc=null;
+
+const themes={
+ sunrise:{colors:['#ffd166','#ffb703','#fb8500','#ff8fab','#ff6f91'],persona:'🌅 Sunrise Dreamer: optimistic & future-focused.',main:'#ff6f91'},
+ ocean:{colors:['#90dbf4','#48cae4','#00b4d8','#0096c7','#0077b6'],persona:'🌊 Calm Ocean: steady, reflective growth.',main:'#0096c7'},
+ forest:{colors:['#a7c957','#6a994e','#386641','#90be6d','#52796f'],persona:'🌲 Grounded Forest: patient & resilient.',main:'#6a994e'},
+ lavender:{colors:['#e0aaff','#cdb4db','#b8c0ff','#a2d2ff','#ffc8dd'],persona:'💜 Gentle Lavender: healing + intention.',main:'#cdb4db'},
+ berry:{colors:['#ff006e','#d62828','#9b2226','#6a040f','#ff4d6d'],persona:'🍓 Bold Berry: fearless ambition.',main:'#ff006e'},
+ mono:{colors:['#adb5bd','#6c757d','#495057','#343a40','#212529'],persona:'⚫ Minimal Focus: clarity & discipline.',main:'#495057'}
+};
+
+function init(){
+ buildThemeButtons();
+ const data=JSON.parse(localStorage.getItem('bingo2026'))||Array(25).fill('');
+ for(let i=0;i<25;i++){
+  const t=document.createElement('div');
+  t.className='tile';
+  t.draggable=true;
+  t.textContent=data[i]||'Click to set goal';
+  t.onclick=()=>selectTile(i);
+  t.addEventListener('dragstart',()=>{dragSrc=i;t.classList.add('dragging')});
+  t.addEventListener('dragend',()=>t.classList.remove('dragging'));
+  t.addEventListener('dragover',e=>e.preventDefault());
+  t.addEventListener('drop',()=>swapTiles(i));
+  board.appendChild(t);
+ }
+ changeTheme(localStorage.getItem('theme')||'sunrise');
+ loadHeader();
+}
+
+function selectTile(i){selected=i;editor.value=loadData()[i]||'';document.getElementById('panel').style.display='flex'}
+function saveTile(){}
+function loadData(){return JSON.parse(localStorage.getItem('bingo2026'))||Array(25).fill('')}
+function saveData(d){localStorage.setItem('bingo2026',JSON.stringify(d))}
+
+function swapTiles(i){if(dragSrc==null)return;const d=loadData();[d[dragSrc],d[i]]=[d[i],d[dragSrc]];saveData(d);board.children[dragSrc].textContent=d[dragSrc]||'Click';board.children[i].textContent=d[i]||'Click'}
+
+function changeTheme(name){
+ const t=themes[name];
+ [...board.children].forEach((el,i)=>el.style.background=t.colors[i%5]);
+ document.documentElement.style.setProperty('--title',t.main);
+ document.documentElement.style.setProperty('--subtitle',t.colors[1]);
+ personaBox.textContent=t.persona;
+ localStorage.setItem('theme',name)
+}
+
+function setFontScale(v){document.documentElement.style.setProperty('--font-scale',v)}
+function toggleContrast(on){document.body.style.filter=on?'contrast(1.2)':''}
+
+function saveHeader(){localStorage.setItem('title',title.textContent);localStorage.setItem('quote',quote.textContent)}
+function loadHeader(){if(localStorage.getItem('title'))title.textContent=localStorage.getItem('title');if(localStorage.getItem('quote'))quote.textContent=localStorage.getItem('quote');}
+
+document.getElementById('title').oninput=saveHeader;document.getElementById('quote').oninput=saveHeader;
+
+function hidePanel(){document.getElementById('panel').style.display='none'}
+function closePanel(){hidePanel()}
+function setFont(f){document.documentElement.style.setProperty('--font-body',f)}
+
+editor.oninput=()=>{
+ if(selected===null)return;
+ const d=loadData();
+ d[selected]=editor.value;
+ saveData(d);
+ board.children[selected].textContent=editor.value||'Click to set goal'
+}
+
+function buildThemeButtons(){
+ const wrap=document.getElementById('themeButtons');
+ Object.entries(themes).forEach(([k,v])=>{
+  const b=document.createElement('button');
+  b.textContent=k.charAt(0).toUpperCase()+k.slice(1);
+  b.style.background=v.main;
+  b.style.color='#fff';
+  b.onclick=()=>changeTheme(k);
+  wrap.appendChild(b);
+ })
+}
+
+function exportPNG(){html2canvas(document.getElementById('capture')).then(c=>download(c,'png'))}
+function exportJPG(){html2canvas(document.getElementById('capture')).then(c=>download(c,'jpeg'))}
+function exportPDF(){html2canvas(document.getElementById('capture')).then(c=>{const pdf=new jspdf.jsPDF('p','pt','a4');const img=c.toDataURL('image/png');pdf.addImage(img,'PNG',20,20,560,560);pdf.save('2026-goals-bingo.pdf')})}
+function download(canvas,type){const a=document.createElement('a');a.href=canvas.toDataURL('image/'+type);a.download='2026-goals-bingo.'+type;a.click()}
+
+function shareBoard(){html2canvas(document.getElementById('capture')).then(c=>{c.toBlob(b=>{const f=new File([b],'goals.png',{type:'image/png'});navigator.share({files:[f],title:'My 2026 Goals Bingo'});})})}
+
+init();
+</script>
+</body>
+</html>
