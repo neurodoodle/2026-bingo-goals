@@ -263,50 +263,6 @@ function save(type){
   a.click();
  })
 }
-
-// EXPORT MENU TOGGLE
-const exportBtn = document.getElementById("exportBtn");
-const exportMenu = document.getElementById("exportMenu");
-
-exportBtn.onclick = () => {
-  exportMenu.classList.toggle("hidden");
-};
-
-// SHARE
-document.getElementById("shareBtn").onclick = async () => {
-  if (navigator.share) {
-    await navigator.share({
-      title: "My 2026 Goals Bingo",
-      url: window.location.href
-    });
-  } else {
-    alert("Sharing not supported on this device.");
-  }
-};
-
-// EXPORT FUNCTION
-function exportBoard(type) {
-  const editor = document.getElementById("editorPanel");
-  if (editor) editor.style.display = "none";
-
-  html2canvas(document.querySelector(".board")).then(canvas => {
-    if (type === "png" || type === "jpg") {
-      const link = document.createElement("a");
-      link.download = `2026-bingo.${type}`;
-      link.href = canvas.toDataURL(`image/${type}`);
-      link.click();
-    }
-
-    if (type === "pdf") {
-      const pdf = new jspdf.jsPDF();
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 10, 10, 190, 190);
-      pdf.save("2026-bingo.pdf");
-    }
-
-    if (editor) editor.style.display = "";
-    exportMenu.classList.add("hidden");
-  });
-}
 init();
 </script>
 </body>
