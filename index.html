@@ -128,6 +128,17 @@ button{cursor:pointer;font-weight:700}
 
 <header>
  <h1 contenteditable id="title">2026 Goals Bingo</h1>
+ <div class="top-actions">
+  <button id="exportBtn">Export</button>
+  <button id="shareBtn">Share</button>
+
+  <div id="exportMenu" class="export-menu hidden">
+    <button onclick="exportBoard('png')">PNG</button>
+    <button onclick="exportBoard('jpg')">JPG</button>
+    <button onclick="exportBoard('pdf')">PDF</button>
+  </div>
+</div>
+
  <div class="subtitle">(click to edit)</div>
  <div class="quote" contenteditable id="quote">Small steps, big magic.</div>
 </header>
