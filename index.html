@@ -111,6 +111,40 @@ button{cursor:pointer;font-weight:700}
  .panel,#exportMenu{display:none}
  .app{grid-template-columns:1fr}
 }
+.top-actions {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.top-actions button {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.export-menu {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hidden {
+  display: none;
+}
+
 </style>
 </head>
 
@@ -190,7 +224,7 @@ function init(){
  for(let i=0;i<25;i++){
   const t=document.createElement('div');
   t.className='tile';
-  t.textContent=data[i]||'Click';
+  t.textContent=data[i]||'Click to edit';
   t.onclick=()=>selectTile(i);
   board.appendChild(t);
  }
@@ -200,13 +234,13 @@ function init(){
 
 function selectTile(i){
  selected=i;
- editor.value=board.children[i].textContent==='Click'?'':board.children[i].textContent;
+ editor.value=board.children[i].textContent==='Click to edit'?'':board.children[i].textContent;
  panel.style.display='flex';
 }
 
 editor.oninput=()=>{
  if(selected===null)return;
- board.children[selected].textContent=editor.value||'Click';
+ board.children[selected].textContent=editor.value||'Click to edit';
  const d=[...board.children].map(t=>t.textContent);
  localStorage.setItem('bingo',JSON.stringify(d));
 };
